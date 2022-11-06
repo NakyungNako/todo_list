@@ -2,21 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
 import 'package:to_do_list/model/todo_model.dart';
-import 'package:to_do_list/todo_tile.dart';
+import 'package:to_do_list/widgets/todo_tile.dart';
 
-class AllTodo extends StatefulWidget {
-  const AllTodo({Key? key, required this.searchTodoList, required this.localSave, required this.todoList, required this.updateFilter}) : super(key: key);
+import '../services/local_notification_service.dart';
+
+class ListTodoView extends StatefulWidget {
+  const ListTodoView({Key? key, required this.searchTodoList, required this.localSave, required this.todoList, required this.updateFilter, required this.service}) : super(key: key);
 
   final List searchTodoList;
   final List todoList;
   final Function localSave;
   final Function updateFilter;
+  final LocalNotificationService service;
 
   @override
-  State<AllTodo> createState() => _AllTodoState();
+  State<ListTodoView> createState() => _ListTodoViewState();
 }
 
-class _AllTodoState extends State<AllTodo> {
+class _ListTodoViewState extends State<ListTodoView> {
   late List temp;
 
   void checkTodo(bool? value, element){
@@ -36,6 +39,7 @@ class _AllTodoState extends State<AllTodo> {
         position = widget.todoList.indexOf(item);
       }
       widget.todoList.removeWhere((todo) => todo == item);
+      widget.service.cancelNotification(id: element.id);
     });
     widget.localSave(widget.todoList);
     widget.updateFilter(widget.todoList);
@@ -101,7 +105,7 @@ class _AllTodoState extends State<AllTodo> {
                             content: const Text("Completed"),
                             action: SnackBarAction(
                                 label: "undo",
-                                onPressed: (){
+                                onPressed: () async {
                                   setState(() {
                                     if(widget.searchTodoList.length == widget.todoList.length){
                                       widget.todoList.insert(deletedTodo[1], deletedTodo[0]);
@@ -112,6 +116,16 @@ class _AllTodoState extends State<AllTodo> {
                                   });
                                   widget.localSave(widget.todoList);
                                   widget.updateFilter(widget.todoList);
+                                  if(((deletedTodo[0].date.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch)/1000).floor() > 600) {
+                                    await widget.service.showScheduledNotification(
+                                      id: deletedTodo[0].id,
+                                      title: '10 minutes left for you TODO',
+                                      body: deletedTodo[0].title,
+                                      seconds: (((deletedTodo[0]
+                                          .date.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch) / 1000) - 600)
+                                          .floor(),
+                                    );
+                                  }
                                 }
                             ),
                           )

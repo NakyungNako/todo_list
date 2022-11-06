@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:to_do_list/add_todo.dart';
-import 'package:to_do_list/hero_dialog_route.dart';
+import 'package:to_do_list/pages/add_todo.dart';
+import 'package:to_do_list/services/local_notification_service.dart';
+import 'package:to_do_list/widgets/hero_dialog_route.dart';
 import 'package:to_do_list/model/todo_model.dart';
-import 'package:to_do_list/pages/all_view.dart';
-import 'package:to_do_list/pages/today_view.dart';
-import 'package:to_do_list/pages/upcoming_view.dart';
+import 'package:to_do_list/pages/list_view.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -50,9 +50,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage>{
-  final _controller = TextEditingController();
-  final _descController = TextEditingController();
   late SharedPreferences prefs;
+
+  late final LocalNotificationService service;
   List searchTodo = [];
   List toDos = [];
   List filterTodo = [];
@@ -92,20 +92,19 @@ class _MyHomePageState extends State<MyHomePage>{
     });
   }
 
-  void saveTodo(String title, String desc, DateTime time){
+  void saveTodo(String title, String desc, DateTime time, int uniqueId){
     setState(() {
       toDos.add(
           Todo(
-              id: UniqueKey().hashCode,
+              id: uniqueId,
               title: title,
               description: desc,
               date: time,
               status: false
           )
       );
-      _controller.clear();
-      _descController.clear();
     });
+
     updateFilter(toDos);
     updateSearch(toDos);
     localSave(toDos, prefs);
@@ -144,6 +143,8 @@ class _MyHomePageState extends State<MyHomePage>{
   void initState() {
     // TODO: implement initState
     super.initState();
+    service = LocalNotificationService();
+    service.initialize();
     setupTodoList();
     searchTodo = toDos;
   }
@@ -184,7 +185,15 @@ class _MyHomePageState extends State<MyHomePage>{
               onChanged: (value) => search(value),
             ),
           ),
-          Expanded(child: AllTodo(searchTodoList: searchTodo, localSave: (todos) => localSave(todos, prefs), todoList: toDos, updateFilter: (todos) => updateFilter(todos),)),
+          Expanded(child:
+            ListTodoView(
+              searchTodoList: searchTodo,
+              localSave: (todos) => localSave(todos, prefs),
+              todoList: toDos,
+              updateFilter: (todos) => updateFilter(todos),
+              service: service,
+            )
+          ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -195,7 +204,8 @@ class _MyHomePageState extends State<MyHomePage>{
           Navigator.of(context).push(HeroDialogRoute(builder: (context) {
             return AddTodo(
               herotag: 'add-todo-hero',
-              onSave: (title, desc, time) => saveTodo(title,desc,time),
+              onSave: (title, desc, time, id) => saveTodo(title,desc,time,id),
+              service: service,
             );
           }));
         },
@@ -259,7 +269,14 @@ class _MyHomePageState extends State<MyHomePage>{
                   }
               );
             }, icon: const Icon(Icons.menu)),
-            IconButton(onPressed: (){}, icon: const Icon(Icons.notifications))
+            IconButton(onPressed: () async {
+              await service.showScheduledNotification(
+                id: 0,
+                title: 'Notification Title',
+                body: 'Some body',
+                seconds: 10,
+              );
+            }, icon: const Icon(Icons.notifications))
           ],
         ),
       ),

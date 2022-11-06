@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:intl/intl.dart';
 
-import 'model/todo_model.dart';
+import '../model/todo_model.dart';
+import '../services/local_notification_service.dart';
 
 class AddTodo extends StatefulWidget {
-  const AddTodo({Key? key, required this.herotag, required this.onSave}) : super(key: key);
+  const AddTodo({Key? key, required this.herotag, required this.onSave, required this.service}) : super(key: key);
 
   final String herotag;
   final Function onSave;
+  final LocalNotificationService service;
 
   @override
   State<AddTodo> createState() => _AddTodoState();
@@ -21,6 +23,8 @@ class _AddTodoState extends State<AddTodo> {
 
   late DateTime selectTime;
 
+  late int key;
+
 
   @override
   void initState() {
@@ -28,6 +32,13 @@ class _AddTodoState extends State<AddTodo> {
     super.initState();
     dateinput.text = '';
     selectTime = DateTime.now();
+    key = UniqueKey().hashCode;
+  }
+
+  void createNewKey(){
+    setState(() {
+      key = UniqueKey().hashCode;
+    });
   }
 
   @override
@@ -89,8 +100,22 @@ class _AddTodoState extends State<AddTodo> {
                         valueListenable: _controller,
                         builder: (context, value, child) {
                           return ElevatedButton(
-                              onPressed: value.toString().contains('┤├') ? null : () => {
-                                widget.onSave(_controller.text,_descController.text,selectTime),
+                              onPressed: value.toString().contains('┤├') ? null : () async =>  {
+                                createNewKey(),
+                                widget.onSave(
+                                    _controller.text,
+                                    _descController.text,
+                                    selectTime,
+                                    key
+                                ),
+                                if(((selectTime.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch)/1000).floor() > 600){
+                                  await widget.service.showScheduledNotification(
+                                    id: key,
+                                    title: '10 minutes left for you TODO',
+                                    body: _controller.text,
+                                    seconds: (((selectTime.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch)/1000) - 600).floor(),
+                                  ),
+                                },
                                 _controller.clear(),
                                 _descController.clear(),
                                 dateinput.clear(),
