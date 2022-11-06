@@ -80,6 +80,7 @@ class _AddTodoState extends State<AddTodo> {
                       controller: dateinput,
                       decoration: const InputDecoration(
                         hintText: 'Pick Date',
+                        border: InputBorder.none,
                       ),
                       onTap: () {
                         DatePicker.showDateTimePicker(context,
@@ -120,15 +121,10 @@ class _AddTodoState extends State<AddTodo> {
                                 _descController.clear(),
                                 dateinput.clear(),
                               },
-                              child: Text('Add')
+                              child: const Text('Add')
                           );
                         }
                     ),
-                    // TextButton(
-                    //   onPressed: controller.toString().isNotEmpty ? onSave : null,
-                    //   // style: ButtonStyle(overlayColor: MaterialStateProperty.all<Color>(Colors.deepOrange.shade50)),
-                    //   child: const Text('Add', style: TextStyle(fontSize: 16)),
-                    // )
                   ],
                 ),
               ),

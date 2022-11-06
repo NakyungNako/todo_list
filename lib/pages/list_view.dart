@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
-import 'package:to_do_list/model/todo_model.dart';
 import 'package:to_do_list/widgets/todo_tile.dart';
 
 import '../services/local_notification_service.dart';
@@ -170,7 +170,15 @@ class _ListTodoViewState extends State<ListTodoView> {
                 );
               },
             )
-            : const Center(child: Text("NOTHING HERE!"))
+            : Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset('assets/images/not-found.svg',width: 200, color: Colors.amber[300],),
+                    const Text("Nothing Is Here", style: TextStyle(fontSize: 30, fontWeight: FontWeight.w300, color: Colors.black45),)
+                  ],
+                )
+        )
       ),
     );
   }

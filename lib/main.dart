@@ -270,11 +270,10 @@ class _MyHomePageState extends State<MyHomePage>{
               );
             }, icon: const Icon(Icons.menu)),
             IconButton(onPressed: () async {
-              await service.showScheduledNotification(
+              await service.showNotification(
                 id: 0,
-                title: 'Notification Title',
-                body: 'Some body',
-                seconds: 10,
+                title: 'ToDoList Notification',
+                body: 'Testing Notification!!!',
               );
             }, icon: const Icon(Icons.notifications))
           ],
